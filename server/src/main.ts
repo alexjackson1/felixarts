@@ -44,6 +44,13 @@ function handleListening(server: http.Server) {
 }
 
 async function main() {
+  // Perform database model construction and initialisation.
+  try {
+    await initDB();
+  } catch (e) {
+    process.exit(-1);
+  }
+
   // Determine and set port of Express app
   const port = normalisePort(process.env.PORT || 3000);
   app.set("port", port);
@@ -55,9 +62,6 @@ async function main() {
   // Add event handlers
   server.on("error", handleError(port));
   server.on("listening", handleListening(server));
-
-  // Perform database model construction and initialisation.
-  await initDB();
 }
 
 main().catch(console.error);
