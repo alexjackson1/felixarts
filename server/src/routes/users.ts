@@ -1,19 +1,26 @@
-import express, { RequestHandler } from "express";
+import express from "express";
+import dbg from "debug";
+
 import {
   createUser,
   findUserById,
   listAllUsers,
   removeUserById,
+  updateUserById,
   WithPassword,
 } from "../db/users";
-import { UserData } from "../types";
+
+import { UserData, WithId } from "../types";
 
 import {
   validateCreateUser,
   validateFindUserById,
   validateListAllUsers,
   validateRemoveUser,
+  validateUpdateUserById,
 } from "../validation/users";
+
+const debug = dbg("felixarts:server:users");
 
 const router = express.Router();
 
@@ -31,10 +38,13 @@ function handleError(error: unknown): ErrorResponse {
 }
 
 router.get("/", ...validateListAllUsers(), async function (_req, res) {
+  debug("Processing request to list all users after validation");
   try {
     const users = await listAllUsers();
+    debug("Successfully retrieved all users, count: %d", users.length);
     res.status(200).json(users);
   } catch (e) {
+    debug("An error occurred whilst retrieving all users");
     res.status(500).json(handleError(e));
   } finally {
     res.send();
@@ -42,7 +52,9 @@ router.get("/", ...validateListAllUsers(), async function (_req, res) {
 });
 
 router.post("/", ...validateCreateUser(), async function (req, res) {
-  const data: Omit<WithPassword<UserData>, "id" | "authors"> = {
+  debug("Processing request to create new user after validation");
+
+  const data: Omit<WithPassword<UserData>, "id"> = {
     full_name: req.body.full_name,
     display_name: req.body.display_name,
     verified: req.body.verified,
@@ -53,8 +65,10 @@ router.post("/", ...validateCreateUser(), async function (req, res) {
 
   try {
     const user = await createUser(data);
+    debug("Successfully created new user: %o", user);
     res.status(200).json(user);
   } catch (e) {
+    debug("An error occurred whilst creating user");
     res.status(500).json(handleError(e));
   } finally {
     res.send();
@@ -63,21 +77,59 @@ router.post("/", ...validateCreateUser(), async function (req, res) {
 
 router.get("/:id", ...validateFindUserById(), async function (req, res) {
   const { id } = req.params;
+  debug("Processing request to find user by id '%s'", id);
+
   try {
     const user = await findUserById(id);
+    debug("Successfully found user: %o", user);
     res.status(200).json(user);
   } catch (e) {
+    debug("An error occurred whilst finding user");
     res.status(500).json(handleError(e));
   } finally {
     res.send();
   }
 });
+
+router.post("/:id", ...validateUpdateUserById(), async function (req, res) {
+  const { id } = req.params;
+  debug(
+    "Processing request to update user by id '%s' with data: %o",
+    id,
+    req.body
+  );
+
+  const data: WithId<Partial<UserData>> = {
+    id,
+    full_name: req.body.full_name || undefined,
+    display_name: req.body.display_name || undefined,
+    verified: req.body.verified || undefined,
+    auth_role: req.body.auth_role || undefined,
+    email: req.body.email || undefined,
+  };
+
+  try {
+    const user = await updateUserById(data);
+    debug("Successfully updated user: %o", user);
+    res.status(200).json(user);
+  } catch (e) {
+    debug("An error occurred whilst updating user");
+    res.status(500).json(handleError(e));
+  } finally {
+    res.send();
+  }
+});
+
 router.delete("/:id", ...validateRemoveUser(), async function (req, res) {
   const { id } = req.params;
+  debug("Processing request to remove user by id '%s'", id);
+
   try {
     await removeUserById(id);
+    debug("Successfully removed user");
     res.status(200);
   } catch (e) {
+    debug("An error occurred whilst removing user");
     res.status(500).json(handleError(e));
   } finally {
     res.send();

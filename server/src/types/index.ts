@@ -10,3 +10,5 @@ export enum AuthRole {
 export interface UserData extends Omit<User, "authors"> {
   email: string;
 }
+
+export type WithId<T> = T & { id: string };

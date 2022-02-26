@@ -1,4 +1,6 @@
-export function normalisePort(port: string | number): number | undefined {
+export function normalisePort(port?: string | number): number | undefined {
+  if (!port) return undefined;
+
   if (typeof port !== "number") {
     port = Number.parseInt(port, 10);
   }

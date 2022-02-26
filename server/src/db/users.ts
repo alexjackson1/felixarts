@@ -1,11 +1,13 @@
 import argon from "argon2";
-import { getConnection } from "typeorm";
+import { DeepPartial, getConnection } from "typeorm";
 import { Account, User } from "../models/User";
-import { UserData } from "../types";
+import { UserData, WithId } from "../types";
 
 export type WithPassword<T extends Omit<User, "authors">> = T & {
   password: string;
 };
+
+type AccountWithUser = Account & { user: User };
 
 function mapJoinToUserData(data: Account & { user: User }): UserData {
   const { email, user } = data;
@@ -17,6 +19,21 @@ function mapJoinToUserData(data: Account & { user: User }): UserData {
     email,
     verified: user.verified,
     auth_role: user.auth_role,
+  };
+}
+
+function mapPartialJoinToUserData(
+  data: DeepPartial<AccountWithUser> & { user: { id: string } }
+): Partial<UserData> {
+  const { email, user } = data;
+
+  return {
+    id: user.id,
+    full_name: user?.full_name,
+    display_name: user?.display_name,
+    email,
+    verified: user?.verified,
+    auth_role: user?.auth_role,
   };
 }
 
@@ -53,24 +70,25 @@ export async function createUser(
   };
 }
 
-export async function updateUser(data: UserData): Promise<UserData> {
-  const { id, email, ...user } = data;
-  const connection = getConnection();
-  const accountRepository = connection.getRepository(Account);
-  await accountRepository.update({ user: { id } }, { email, user });
-  return data;
-}
+export async function updateUserById(
+  data: WithId<Partial<WithPassword<UserData>>>
+): Promise<Partial<UserData>> {
+  const { id, email, password, ...user } = data;
 
-export async function updateUserPassword(data: {
-  id: string;
-  password: string;
-}): Promise<void> {
-  const { id, password } = data;
   const connection = getConnection();
   const accountRepository = connection.getRepository(Account);
-  await accountRepository.update(
-    { user: { id } },
-    { hash: await argon.hash(password) }
+
+  const updateData: DeepPartial<AccountWithUser> = {
+    user: {
+      id,
+      ...user,
+    },
+    email,
+    hash: password ? await argon.hash(password) : undefined,
+  };
+
+  return mapPartialJoinToUserData(
+    await accountRepository.save<DeepPartial<AccountWithUser>>(updateData)
   );
 }
 

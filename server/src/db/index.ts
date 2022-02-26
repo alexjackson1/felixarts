@@ -1,30 +1,16 @@
 import { createConnection } from "typeorm";
 import { getDBConnectionString } from "../env";
+import { isSysException, SysException } from "../error";
 import { Account, Author, User } from "../models/User";
-
-export interface SysException extends Error {
-  errno: number;
-  code: string;
-  stack?: string;
-}
-
-function isSysException(err: unknown | SysException): err is SysException {
-  if (!(err instanceof Error)) return false;
-  if (!("errno" in (err as SysException))) return false;
-  if (!("code" in (err as SysException))) return false;
-  return true;
-}
 
 function handleSysException(err: SysException): never {
   switch (err.code) {
     case "ECONNREFUSED":
-      console.error("Could not connect to database host");
+      console.error("Could not connect to database");
       console.error("Database connection string:", getDBConnectionString());
-      console.error("Full Details:", err);
       throw err;
     default:
-      console.error("An unexpected error occurred");
-      console.error("Full Details:", err);
+      console.error("An unexpected system error occurred");
       throw err;
   }
 }
@@ -37,6 +23,7 @@ export async function initDB() {
       entities: [User, Account, Author],
       synchronize: true,
       logging: true,
+      logger: "debug",
       uuidExtension: "pgcrypto",
     });
   } catch (e: unknown) {

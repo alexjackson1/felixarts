@@ -32,6 +32,27 @@ export function validateCreateUser(): RequestHandler[] {
   ];
 }
 
+export function validateUpdateUserById(): RequestHandler[] {
+  return [
+    body("email", "User payload must be a valid email address")
+      .optional()
+      .isEmail()
+      .normalizeEmail(),
+    body("verified", "Verified status must be a boolean value")
+      .optional()
+      .toBoolean()
+      .isBoolean(),
+    body("auth_role")
+      .optional()
+      .isIn([
+        AuthRole.Administrator,
+        AuthRole.Anonymous,
+        AuthRole.Editor,
+        AuthRole.Writer,
+      ]),
+  ];
+}
+
 export function validateFindUserById(): RequestHandler[] {
   return [param("id", "id must be a valid uuid").isUUID()];
 }

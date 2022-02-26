@@ -1,10 +1,29 @@
+import dbg from "debug";
+
+import { normalisePort } from "./utils";
+
+const debug = dbg("felixarts:server:env");
+
+export function debugEnvironment() {
+  debug("PORT=%d", getExpressPort());
+
+  debug("DB_HOST=%s", getDBHost());
+  debug("DB_PORT=%d", getDBPort());
+  debug("DB_USER=%s", getDBUser());
+  debug("DB_PASSWORD=%s", getDBPass());
+  debug("DB_NAME=%s", getDBName());
+}
+
+export function getExpressPort(): number {
+  return normalisePort(process.env.PORT) || 3000;
+}
+
 export function getDBHost(): string {
   return process.env.DB_HOST || "db";
 }
 
 export function getDBPort(): number {
-  const port = Number.parseInt(process.env.DB_PORT || "5432");
-  return Number.isNaN(port) ? 5432 : port;
+  return normalisePort(process.env.DB_PORT) || 5432;
 }
 
 export function getDBUser(): string {
