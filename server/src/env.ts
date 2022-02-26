@@ -12,6 +12,14 @@ export function debugEnvironment() {
   debug("DB_USER=%s", getDBUser());
   debug("DB_PASSWORD=%s", getDBPass());
   debug("DB_NAME=%s", getDBName());
+
+  debug("JWT_SECRET=%s", getSecretKey());
+
+  debug("DB_CONNECTION_STRING=%s", getDBConnectionString());
+}
+
+export function getSecretKey(): string {
+  return process.env.JWT_SECRET || "keyboard cat";
 }
 
 export function getExpressPort(): number {

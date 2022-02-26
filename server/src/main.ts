@@ -12,7 +12,17 @@ dotenv.config();
 
 const debug = dbg("felixarts:server");
 
-function initialiseHttpServer(port: number): http.Server {
+async function main() {
+  // Debug environment variables
+  debugEnvironment();
+
+  // Perform database model construction and initialisation.
+  await initDB();
+
+  // Determine and set port of Express app
+  const port = getExpressPort();
+  app.set("port", port);
+
   // HTTP Server error handler
   const handleError = (error: Error) => {
     // Filter unexpected/unknown errors that may have occurred and rethrow
@@ -44,21 +54,6 @@ function initialiseHttpServer(port: number): http.Server {
     debug("Listening on " + port);
   });
 
-  return server;
-}
-
-async function main() {
-  // Debug environment variables
-  debugEnvironment();
-
-  // Perform database model construction and initialisation.
-  await initDB();
-
-  // Determine and set port of Express app
-  const port = getExpressPort();
-  app.set("port", port);
-
-  const server = initialiseHttpServer(port);
   server.listen(port);
 }
 

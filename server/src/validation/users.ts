@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { body, oneOf, param, query } from "express-validator";
+import { body, param } from "express-validator";
 import { AuthRole } from "../types";
 
 export function validateListAllUsers(): RequestHandler[] {
@@ -34,7 +34,7 @@ export function validateCreateUser(): RequestHandler[] {
 
 export function validateUpdateUserById(): RequestHandler[] {
   return [
-    body("email", "User payload must be a valid email address")
+    body("email", "User payload must contain a valid email address")
       .optional()
       .isEmail()
       .normalizeEmail(),

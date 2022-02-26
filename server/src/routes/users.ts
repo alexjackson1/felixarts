@@ -1,4 +1,5 @@
 import express from "express";
+import passport from "passport";
 import dbg from "debug";
 
 import {
@@ -10,8 +11,6 @@ import {
   WithPassword,
 } from "../db/users";
 
-import { UserData, WithId } from "../types";
-
 import {
   validateCreateUser,
   validateFindUserById,
@@ -19,6 +18,9 @@ import {
   validateRemoveUser,
   validateUpdateUserById,
 } from "../validation/users";
+
+import { adminOnly } from "../auth";
+import { AuthRole, UserData, WithId } from "../types";
 
 const debug = dbg("felixarts:server:users");
 
@@ -37,19 +39,25 @@ function handleError(error: unknown): ErrorResponse {
   return { code: 500, message: "An unknown error occurred" };
 }
 
-router.get("/", ...validateListAllUsers(), async function (_req, res) {
-  debug("Processing request to list all users after validation");
-  try {
-    const users = await listAllUsers();
-    debug("Successfully retrieved all users, count: %d", users.length);
-    res.status(200).json(users);
-  } catch (e) {
-    debug("An error occurred whilst retrieving all users");
-    res.status(500).json(handleError(e));
-  } finally {
-    res.send();
+router.get(
+  "/",
+  ...validateListAllUsers(),
+  passport.authenticate("session"),
+  adminOnly,
+  async function (_req, res) {
+    debug("Processing request to list all users after validation");
+    try {
+      const users = await listAllUsers();
+      debug("Successfully retrieved all users, count: %d", users.length);
+      res.status(200).json(users);
+    } catch (e) {
+      debug("An error occurred whilst retrieving all users");
+      res.status(500).json(handleError(e));
+    } finally {
+      res.send();
+    }
   }
-});
+);
 
 router.post("/", ...validateCreateUser(), async function (req, res) {
   debug("Processing request to create new user after validation");
@@ -75,54 +83,76 @@ router.post("/", ...validateCreateUser(), async function (req, res) {
   }
 });
 
-router.get("/:id", ...validateFindUserById(), async function (req, res) {
-  const { id } = req.params;
-  debug("Processing request to find user by id '%s'", id);
+router.get(
+  "/:id",
+  ...validateFindUserById(),
+  passport.authenticate("session"),
+  async function (req, res) {
+    const { id } = req.params;
+    debug("Processing request to find user by id '%s'", id);
 
-  try {
-    const user = await findUserById(id);
-    debug("Successfully found user: %o", user);
-    res.status(200).json(user);
-  } catch (e) {
-    debug("An error occurred whilst finding user");
-    res.status(500).json(handleError(e));
-  } finally {
-    res.send();
+    if (req.user?.auth_role !== AuthRole.Administrator && id !== req.user?.id) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const user = await findUserById(id);
+      debug("Successfully found user: %o", user);
+      res.status(200).json(user);
+    } catch (e) {
+      debug("An error occurred whilst finding user");
+      res.status(500).json(handleError(e));
+    } finally {
+      res.send();
+    }
   }
-});
+);
 
-router.post("/:id", ...validateUpdateUserById(), async function (req, res) {
-  const { id } = req.params;
-  debug(
-    "Processing request to update user by id '%s' with data: %o",
-    id,
-    req.body
-  );
+router.post(
+  "/:id",
+  ...validateUpdateUserById(),
+  passport.authenticate("session"),
+  async function (req, res) {
+    const { id } = req.params;
+    debug(
+      "Processing request to update user by id '%s' with data: %o",
+      id,
+      req.body
+    );
 
-  const data: WithId<Partial<UserData>> = {
-    id,
-    full_name: req.body.full_name || undefined,
-    display_name: req.body.display_name || undefined,
-    verified: req.body.verified || undefined,
-    auth_role: req.body.auth_role || undefined,
-    email: req.body.email || undefined,
-  };
+    if (req.user?.auth_role !== AuthRole.Administrator && id !== req.user?.id) {
+      return res.sendStatus(401);
+    }
 
-  try {
-    const user = await updateUserById(data);
-    debug("Successfully updated user: %o", user);
-    res.status(200).json(user);
-  } catch (e) {
-    debug("An error occurred whilst updating user");
-    res.status(500).json(handleError(e));
-  } finally {
-    res.send();
+    const data: WithId<Partial<UserData>> = {
+      id,
+      full_name: req.body.full_name || undefined,
+      display_name: req.body.display_name || undefined,
+      verified: req.body.verified || undefined,
+      auth_role: req.body.auth_role || undefined,
+      email: req.body.email || undefined,
+    };
+
+    try {
+      const user = await updateUserById(data);
+      debug("Successfully updated user: %o", user);
+      res.status(200).json(user);
+    } catch (e) {
+      debug("An error occurred whilst updating user");
+      res.status(500).json(handleError(e));
+    } finally {
+      res.send();
+    }
   }
-});
+);
 
 router.delete("/:id", ...validateRemoveUser(), async function (req, res) {
   const { id } = req.params;
   debug("Processing request to remove user by id '%s'", id);
+
+  if (req.user?.auth_role !== AuthRole.Administrator && id !== req.user?.id) {
+    return res.sendStatus(401);
+  }
 
   try {
     await removeUserById(id);

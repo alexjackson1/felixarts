@@ -13,5 +13,5 @@ RUN yarn build
 
 # Serve static contents on nginx image
 FROM nginx:1.21.6-alpine
-COPY ["config/default.conf", "/etc/nginx/conf.d/default.conf"]
+COPY ["docker/nginx/default.conf", "/etc/nginx/conf.d/default.conf"]
 COPY --from=build ["/usr/src/app/dist", "/usr/share/nginx/html"]
