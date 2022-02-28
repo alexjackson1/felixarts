@@ -1,4 +1,6 @@
 import dotenv from "dotenv";
+dotenv.config();
+
 import dbg from "debug";
 import http from "http";
 
@@ -7,8 +9,6 @@ import { initDB } from "./db";
 
 import { isSysException } from "./error";
 import { debugEnvironment, getExpressPort } from "./env";
-
-dotenv.config();
 
 const debug = dbg("felixarts:server");
 

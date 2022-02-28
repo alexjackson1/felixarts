@@ -11,9 +11,10 @@ import dbg from "debug";
 import { Pool } from "pg";
 import { v4 as uuidv4 } from "uuid";
 
-import { initialisePassport, LocalStrategy } from "./auth";
+import { initialisePassport } from "./auth";
 import { getSecretKey } from "./env";
-import { findUserById } from "./db/users";
+
+import postgraphile from "./middleware/graphile";
 
 import usersRouter from "./routes/users";
 import sessionRouter from "./routes/session";
@@ -62,6 +63,7 @@ app.use(express.json()); // parse json body content
 app.use(express.urlencoded({ extended: false })); // parse url encoded parameters and queries
 app.use(cookieParser()); // parse cookies sent with request
 app.use(session(sessionConfig)); // use `express-session` server-side session storage middleware
+app.use(postgraphile());
 
 const passport = initialisePassport();
 app.use(passport.initialize());

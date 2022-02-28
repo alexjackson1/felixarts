@@ -8,6 +8,7 @@
     "docker:build": "docker build --tag felixarts/server:latest ."
   },
   "dependencies": {
+    "@graphile-contrib/pg-simplify-inflector": "^6.1.0",
     "argon2": "^0.28.4",
     "connect-pg-simple": "^7.0.0",
     "cookie-parser": "~1.4.4",
@@ -20,6 +21,7 @@
     "passport": "^0.5.2",
     "passport-local": "^1.0.0",
     "pg": "^8.7.3",
+    "postgraphile": "^4.12.9",
     "reflect-metadata": "^0.1.13",
     "typeorm": "^0.2.44",
     "uuid": "^8.3.2"

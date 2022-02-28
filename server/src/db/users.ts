@@ -77,19 +77,24 @@ export async function updateUserById(
 
   const connection = getConnection();
   const accountRepository = connection.getRepository(Account);
+  const userRepository = connection.getRepository(User);
 
-  const updateData: DeepPartial<AccountWithUser> = {
-    user: {
-      id,
-      ...user,
-    },
+  const accountUpdate: DeepPartial<Account> = {
     email,
     hash: password ? await argon.hash(password) : undefined,
   };
 
-  return mapPartialJoinToUserData(
-    await accountRepository.save<DeepPartial<AccountWithUser>>(updateData)
-  );
+  const userUpdate: DeepPartial<User> = {
+    id,
+    ...user,
+  };
+
+  const [newAccount, _newUser] = await Promise.all([
+    accountRepository.save(accountUpdate),
+    userRepository.save(userUpdate),
+  ]);
+
+  return mapPartialJoinToUserData(newAccount);
 }
 
 export async function removeUserById(id: string): Promise<void> {

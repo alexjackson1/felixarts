@@ -4,7 +4,16 @@ import { normalisePort } from "./utils";
 
 const debug = dbg("felixarts:server:env");
 
+export function getNodeEnv() {
+  return process.env.NODE_ENV;
+}
+
+export function isDevelopment() {
+  return getNodeEnv() == "development";
+}
+
 export function debugEnvironment() {
+  debug("NODE_ENV=%s", getNodeEnv());
   debug("PORT=%d", getExpressPort());
 
   debug("DB_HOST=%s", getDBHost());
@@ -42,6 +51,14 @@ export function getDBPass(): string | undefined {
   return process.env.DB_PASSWORD;
 }
 
+export function getDBOwner(): string | undefined {
+  return process.env.DB_OWNER_USER;
+}
+
+export function getDBOwnerPass(): string | undefined {
+  return process.env.DB_OWNER_PASSWORD;
+}
+
 export function getDBName(): string {
   return process.env.DB_NAME || "atlas";
 }
@@ -50,6 +67,20 @@ export function getDBConnectionString(): string {
   const user = getDBUser();
   const pass = getDBPass();
   const cred = pass ? `${user}:${pass}` : user;
+
+  const host = getDBHost();
+  const port = getDBPort();
+  const name = getDBName();
+
+  return `postgres://${cred}@${host}:${port}/${name}`;
+}
+
+export function getDBOwnerConnectionString(): string {
+  const owner = getDBOwner();
+  if (!owner) return getDBConnectionString();
+
+  const pass = getDBOwnerPass();
+  const cred = pass ? `${owner}:${pass}` : owner;
 
   const host = getDBHost();
   const port = getDBPort();
