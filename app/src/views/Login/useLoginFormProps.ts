@@ -41,11 +41,11 @@ export function useLoginFormProps(defaultForm?: FormInstance<LoginFormData>) {
       } else {
         notification.success({
           message: "Successfully signed in!",
-          description: `You're signed in as ${user.fullName}.`,
+          description: `Welcome back ${user.displayName}.`,
         });
 
         setSignedIn(user);
-        navigate("/assignments");
+        navigate("/profile");
       }
     } catch (e) {
       notification.error({

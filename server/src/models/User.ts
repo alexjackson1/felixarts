@@ -31,7 +31,7 @@ export class User {
   })
   auth_role: AuthRole;
 
-  @ManyToMany(() => Author)
+  @ManyToMany(() => Author, { cascade: true })
   @JoinTable({
     name: "user_authors",
     joinColumn: {
@@ -49,7 +49,7 @@ export class User {
 
 @Entity({ schema: "private" })
 export class Account {
-  @OneToOne(() => User, { primary: true })
+  @OneToOne(() => User, { primary: true, cascade: true })
   @JoinColumn({ name: "user_id", referencedColumnName: "id" })
   user: User;
 

@@ -4,6 +4,7 @@ export enum NavItemKey {
   Home = "home",
   Assignments = "assignments",
   EditorZone = "editor",
+  Profile = "profile",
 }
 
 export function navItem(key: NavItemKey) {
@@ -27,6 +28,13 @@ export function navItem(key: NavItemKey) {
         key: NavItemKey.EditorZone,
         to: "/edit",
         label: "Section Editorial",
+        icon: <EditOutlined />,
+      };
+    case NavItemKey.Profile:
+      return {
+        key: NavItemKey.Profile,
+        to: "/profile",
+        label: "Profile",
         icon: <EditOutlined />,
       };
     default:

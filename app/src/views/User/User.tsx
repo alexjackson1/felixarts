@@ -3,7 +3,6 @@ import useAuth from "../../hooks/useAuth";
 import { Navigate, useParams } from "react-router-dom";
 import useProfileForm from "./useProfileForm";
 import { useForm } from "antd/lib/form/Form";
-import { ProfileFormData } from "../../components/Forms/User";
 
 function User() {
   const { id } = useParams();

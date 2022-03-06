@@ -4,4 +4,5 @@ export { default as Login } from "./Login";
 export { default as Register } from "./Register";
 export { default as Logout } from "./Logout";
 export { default as Error } from "./Error";
-export { default as User } from "./User";
+export { default as User, AllUsers } from "./User";
+export { default as Profile } from "./Profile";

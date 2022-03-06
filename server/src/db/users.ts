@@ -42,14 +42,11 @@ export async function createUser(
 ): Promise<UserData> {
   const connection = getConnection();
 
-  const userRepository = connection.getRepository(User);
   const user = new User();
   user.full_name = data.full_name;
   user.display_name = data.display_name;
   user.verified = data.verified;
   user.auth_role = data.auth_role;
-
-  userRepository.save(user);
 
   const accountRepository = connection.getRepository(Account);
   const account = new Account();
@@ -57,8 +54,9 @@ export async function createUser(
   account.email = data.email;
   account.hash = await argon.hash(data.password);
   account.confirmed = false;
+  account.user = user;
 
-  accountRepository.save(account);
+  await accountRepository.save(account);
 
   return {
     id: user.id,
@@ -77,24 +75,16 @@ export async function updateUserById(
 
   const connection = getConnection();
   const accountRepository = connection.getRepository(Account);
-  const userRepository = connection.getRepository(User);
 
   const accountUpdate: DeepPartial<Account> = {
     email,
     hash: password ? await argon.hash(password) : undefined,
+    user: { id, ...user },
   };
 
-  const userUpdate: DeepPartial<User> = {
-    id,
-    ...user,
-  };
+  await accountRepository.save(accountUpdate);
 
-  const [newAccount, _newUser] = await Promise.all([
-    accountRepository.save(accountUpdate),
-    userRepository.save(userUpdate),
-  ]);
-
-  return mapPartialJoinToUserData(newAccount);
+  return await findUserById(id);
 }
 
 export async function removeUserById(id: string): Promise<void> {
@@ -113,9 +103,9 @@ export async function listAllUsers(): Promise<UserData[]> {
   const connection = getConnection();
   const accountRepository = connection.getRepository(Account);
 
-  const accounts = (await accountRepository.find({
+  const accounts = await accountRepository.find({
     relations: ["user"],
-  })) as (Account & { user: User })[];
+  });
 
   return accounts.map(mapJoinToUserData);
 }
@@ -124,12 +114,10 @@ export async function findUserById(id: string): Promise<UserData> {
   const connection = getConnection();
   const accountRepository = connection.getRepository(Account);
 
-  const user = (await accountRepository.findOneOrFail({
-    where: {
-      user: { id },
-    },
-    relations: ["user"],
-  })) as Account & { user: User };
+  const user = await accountRepository.findOneOrFail(
+    { user: { id } },
+    { relations: ["user"] }
+  );
 
   return mapJoinToUserData(user);
 }
@@ -138,10 +126,10 @@ export async function findUserByEmail(email: string): Promise<UserData> {
   const connection = getConnection();
   const accountRepository = connection.getRepository(Account);
 
-  const user = (await accountRepository.findOneOrFail({
+  const user = await accountRepository.findOneOrFail({
     where: { email },
     relations: ["user"],
-  })) as Account & { user: User };
+  });
 
   return mapJoinToUserData(user);
 }

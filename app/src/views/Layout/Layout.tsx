@@ -22,10 +22,12 @@ const AppLayout = styled(Layout)`
 
 function useSelectedKeys() {
   const home = useMatch({ path: "/", end: true });
+  const profile = useMatch({ path: "/profile", end: true });
   const assignments = useMatch({ path: "/assignments", end: false });
   const editor = useMatch({ path: "/edit", end: false });
 
   if (home) return [NavItemKey.Home];
+  if (profile) return [NavItemKey.Profile];
   if (assignments) return [NavItemKey.Assignments];
   if (editor) return [NavItemKey.EditorZone];
   return [];
@@ -36,9 +38,11 @@ function useNavItems() {
   const items = [navItem(NavItemKey.Home)];
 
   if (!user) return items;
+  items.push(navItem(NavItemKey.Profile));
   items.push(navItem(NavItemKey.Assignments));
 
   if (user.authRole === AuthRole.Writer) return items;
+
   items.push(navItem(NavItemKey.EditorZone));
 
   return items;

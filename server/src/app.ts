@@ -18,6 +18,8 @@ import postgraphile from "./middleware/graphile";
 
 import usersRouter from "./routes/users";
 import sessionRouter from "./routes/session";
+import profileRouter from "./routes/profile";
+import authorsRouter from "./routes/authors";
 
 const debug = dbg("felixarts:server");
 
@@ -71,5 +73,7 @@ app.use(passport.authenticate("session"));
 
 app.use("/users", usersRouter);
 app.use("/session", sessionRouter);
+app.use("/profile", profileRouter);
+app.use("/authors", authorsRouter);
 
 export default app;

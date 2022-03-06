@@ -1,24 +1,15 @@
-import { RequestHandler } from "express";
 import passport, { PassportStatic } from "passport";
 import { Strategy } from "passport-local";
 
 import { getConnection } from "typeorm";
 
 import argon from "argon2";
-import dbg from "debug";
 
 import { findUserById } from "../db/users";
 import { Account } from "../models/User";
-import { AuthRole } from "../types";
+import dbg from "debug";
 
 const debug = dbg("felixarts:server:auth");
-
-export const adminOnly: RequestHandler = function (req, res, next) {
-  if (!req.user) return res.sendStatus(401);
-  if (req.user.auth_role !== AuthRole.Administrator) return res.sendStatus(401);
-
-  next();
-};
 
 export const LocalStrategy = new Strategy(
   { usernameField: "email" },

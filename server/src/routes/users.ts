@@ -19,7 +19,7 @@ import {
   validateUpdateUserById,
 } from "../validation/users";
 
-import { adminOnly } from "../auth";
+import { adminOnly } from "../middleware/auth";
 import { AuthRole, UserData, WithId } from "../types";
 
 const debug = dbg("felixarts:server:users");
@@ -124,13 +124,14 @@ router.post(
       return res.sendStatus(401);
     }
 
-    const data: WithId<Partial<UserData>> = {
+    const data: WithId<Partial<WithPassword<UserData>>> = {
       id,
       full_name: req.body.full_name || undefined,
       display_name: req.body.display_name || undefined,
       verified: req.body.verified || undefined,
       auth_role: req.body.auth_role || undefined,
       email: req.body.email || undefined,
+      password: req.body.password || undefined,
     };
 
     try {
@@ -157,7 +158,7 @@ router.delete("/:id", ...validateRemoveUser(), async function (req, res) {
   try {
     await removeUserById(id);
     debug("Successfully removed user");
-    res.status(200);
+    res.status(200).json(id);
   } catch (e) {
     debug("An error occurred whilst removing user");
     res.status(500).json(handleError(e));

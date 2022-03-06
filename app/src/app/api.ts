@@ -1,9 +1,44 @@
-import axios from "axios";
-import { User, LoginData } from "./auth";
+import axios, { AxiosResponse } from "axios";
+import { User, LoginData, UserData, WithPassword } from "./auth";
+import { Author, AuthorData, Profile, ProfileData } from "./types";
+import { SoftPartial } from "./utils";
 
 const api = axios.create({
   withCredentials: true,
 });
+
+function asProfile(data: ProfileData): Profile {
+  const { authors, ...user } = data;
+  return { ...asUser(user), authors: authors.map(asAuthor) };
+}
+
+function asAuthor(data: AuthorData): Author {
+  return data; // Nothing is needed here as there are no snake case variables... yet.
+}
+
+function asUser(data: UserData): User {
+  return {
+    id: data.id,
+    fullName: data.full_name,
+    displayName: data.display_name,
+    email: data.email,
+    verified: data.verified,
+    authRole: data.auth_role,
+  };
+}
+
+function toUserData(user: User): UserData;
+function toUserData(user: SoftPartial<User>): SoftPartial<UserData>;
+function toUserData(user: SoftPartial<User>): SoftPartial<UserData> {
+  return {
+    id: user.id,
+    full_name: user.fullName,
+    display_name: user.displayName,
+    email: user.email,
+    verified: user.verified,
+    auth_role: user.authRole,
+  };
+}
 
 /**
  * Sends a `POST` request to the `/api/session` endpoint.
@@ -12,7 +47,7 @@ const api = axios.create({
  * @returns promise resolving to user or undefined
  */
 export async function login(data: LoginData): Promise<User | false | undefined> {
-  const result = await api({
+  const result: AxiosResponse<UserData> = await api({
     method: "post",
     url: "/api/session",
     data,
@@ -21,7 +56,7 @@ export async function login(data: LoginData): Promise<User | false | undefined> 
   if (result.status === 401) return false;
   if (result.status !== 200) return undefined;
 
-  return result.data as User;
+  return asUser(result.data);
 }
 
 export interface NewUserData {
@@ -38,7 +73,7 @@ export interface NewUserData {
  * @param data user data
  * @returns promise resolving to user or undefined
  */
-export async function register(data: NewUserData): Promise<User | undefined> {
+export async function register(data: WithPassword<Omit<User, "id">>): Promise<User> {
   const result = await api({
     method: "post",
     url: "/api/users",
@@ -69,34 +104,58 @@ export async function validate(): Promise<User | false | undefined> {
   return result.data as User;
 }
 
-export interface UpdateUserData {
-  fullName: string;
-  email: string;
-  authRole: string;
-  password?: string;
-  verified: boolean;
-  id: string;
+/**
+ * Sends a `POST` request to the `/users/:id` endpoint.
+ */
+export async function updateUser(updates: SoftPartial<User>): Promise<User | false | undefined> {
+  const data = toUserData(updates);
+  console.log(data);
+  const response: AxiosResponse<UserData> = await api({
+    method: "post",
+    url: `/api/users/${updates.id}`,
+    data: toUserData(updates),
+  });
+
+  if (response.status === 401) return false;
+  if (response.status !== 200) return undefined;
+
+  return asUser(response.data);
 }
 
 /**
- * Sends a `PUT` request to the `/api/logout` endpoint.
+ * Sends a `POST` request to the `/users/:id` endpoint.
  */
-export async function updateUser(data: UpdateUserData): Promise<User | false | undefined> {
-  const result = await api({ method: "put", url: `/api/users/${data.id}`, data });
-
-  if (result.status === 401) return false;
-  if (result.status !== 200) return undefined;
-  return result.data as User;
+export async function updateAuthor(
+  updates: SoftPartial<Author>
+): Promise<Author | false | undefined> {
+  throw new Error("unimplemented");
 }
 
 /**
  * Sends a `POST` request to the `/api/logout` endpoint.
  */
-export async function getUserById(id: string): Promise<User | undefined> {
-  const result = await api({ method: "get", url: `/api/users/${id}`, data: { id } });
+export async function findUserById(id: string): Promise<User | undefined> {
+  const response: AxiosResponse<UserData> = await api({
+    method: "get",
+    url: `/api/users/${id}`,
+    data: { id },
+  });
 
-  if (result.status !== 200) return undefined;
-  return result.data as User;
+  if (response.status !== 200) return undefined;
+  return asUser(response.data);
+}
+
+/**
+ * Sends a `GET` request to the `/api/profile/id` endpoint.
+ */
+export async function findUserProfileById(id: string): Promise<Profile | undefined> {
+  const response: AxiosResponse<ProfileData> = await api({
+    method: "get",
+    url: `/api/profile/${id}`,
+  });
+
+  if (response.status !== 200) return undefined;
+  return asProfile(response.data);
 }
 
 export default api;

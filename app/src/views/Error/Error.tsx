@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button, Result } from "antd";
 
-enum ErrorType {
+export enum ErrorType {
   NotFound = 404,
   NotAuthorised = 403,
   InternalError = 500,

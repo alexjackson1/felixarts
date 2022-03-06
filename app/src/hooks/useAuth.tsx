@@ -1,6 +1,6 @@
 import React from "react";
 
-import { User } from "../app/auth";
+import { AuthRole, User } from "../app/auth";
 
 /**
  * Auth state interface.
@@ -62,6 +62,9 @@ interface UseAuthPayload {
   user: User | null;
   setSignedIn: (user: User) => void;
   setSignedOut: () => void;
+  signedIn: boolean;
+  id: string | null;
+  role: AuthRole | null;
 }
 
 /**
@@ -77,10 +80,14 @@ export function useAuth(): UseAuthPayload {
   const { state, dispatch } = context;
   const { user } = state;
 
+  const signedIn = user !== null;
+  const role = signedIn ? user.authRole : null;
+  const id = signedIn ? user.id : null;
+
   const setSignedIn = (user: User) => dispatch({ type: ActionType.SetLoggedIn, user });
   const setSignedOut = () => dispatch({ type: ActionType.SetLoggedOut });
 
-  return { user, setSignedOut, setSignedIn };
+  return { user, role, signedIn, id, setSignedOut, setSignedIn };
 }
 
 export default useAuth;
